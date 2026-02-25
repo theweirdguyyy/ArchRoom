@@ -11,8 +11,8 @@ const Upload = ({ onComplete }: UploadProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [progress, setProgress] = useState(0);
-    // const intervalRef = useRef<NodeJS.Timeout | null>(null);
-    // const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const { isSignedIn } = useOutletContext<AuthContext>();
 
@@ -36,41 +36,24 @@ const Upload = ({ onComplete }: UploadProps) => {
         setProgress(0);
 
         const reader = new FileReader();
-        // reader.onerror = () => {
-        //     setFile(null);
-        //     setProgress(0);
-        // };
+        reader.onerror = () => {
+            setFile(null);
+            setProgress(0);
+        };
         reader.onloadend = () => {
             const base64Data = reader.result as string;
 
-    //         intervalRef.current = setInterval(() => {
-    //             setProgress((prev) => {
-    //                 const next = prev + PROGRESS_INCREMENT;
-    //                 if (next >= 100) {
-    //                     if (intervalRef.current) {
-    //                         clearInterval(intervalRef.current);
-    //                         intervalRef.current = null;
-    //                     }
-    //                     timeoutRef.current = setTimeout(() => {
-    //                         onComplete?.(base64Data);
-    //                         timeoutRef.current = null;
-    //                     }, REDIRECT_DELAY_MS);
-    //                     return 100;
-    //                 }
-    //                 return next;
-    //             });
-    //         }, PROGRESS_INTERVAL_MS);
-    //     };
-    //     reader.readAsDataURL(file);
-    // }, [isSignedIn, onComplete]);
-
-            const interval = setInterval(() => {
+            intervalRef.current = setInterval(() => {
                 setProgress((prev) => {
                     const next = prev + PROGRESS_INCREMENT;
                     if (next >= 100) {
-                            clearInterval(interval);
-                            setTimeout(() => {
-                                onComplete?.(base64Data);
+                        if (intervalRef.current) {
+                            clearInterval(intervalRef.current);
+                            intervalRef.current = null;
+                        }
+                        timeoutRef.current = setTimeout(() => {
+                            onComplete?.(base64Data);
+                            timeoutRef.current = null;
                         }, REDIRECT_DELAY_MS);
                         return 100;
                     }
@@ -80,6 +63,23 @@ const Upload = ({ onComplete }: UploadProps) => {
         };
         reader.readAsDataURL(file);
     }, [isSignedIn, onComplete]);
+
+    //         const interval = setInterval(() => {
+    //             setProgress((prev) => {
+    //                 const next = prev + PROGRESS_INCREMENT;
+    //                 if (next >= 100) {
+    //                         clearInterval(interval);
+    //                         setTimeout(() => {
+    //                             onComplete?.(base64Data);
+    //                     }, REDIRECT_DELAY_MS);
+    //                     return 100;
+    //                 }
+    //                 return next;
+    //             });
+    //         }, PROGRESS_INTERVAL_MS);
+    //     };
+    //     reader.readAsDataURL(file);
+    // }, [isSignedIn, onComplete]);
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -98,13 +98,13 @@ const Upload = ({ onComplete }: UploadProps) => {
         if (!isSignedIn) return;
 
         const droppedFile = e.dataTransfer.files[0];
-        // const allowedTypes = ['image/jpeg', 'image/png'];
-        // if (droppedFile && allowedTypes.includes(droppedFile.type)) {
-        //     processFile(droppedFile);
-        // }
-        if (droppedFile && droppedFile.type.startsWith('image/')){
+        const allowedTypes = ['image/jpeg', 'image/png'];
+        if (droppedFile && allowedTypes.includes(droppedFile.type)) {
             processFile(droppedFile);
         }
+        // if (droppedFile && droppedFile.type.startsWith('image/')){
+        //     processFile(droppedFile);
+        // }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
